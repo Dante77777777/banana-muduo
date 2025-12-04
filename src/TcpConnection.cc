@@ -145,6 +145,29 @@ void TcpConnection::shutdownInLoop()
 }
 
 
+// 连接建立
+void TcpConnection::connectEstablished()
+{
+    setState(kConnected);
+    channel_->tie(shared_from_this());
+    channel_->enableReading(); // 向poller注册channel的EPOLLIN读事件
+
+    // 新连接建立 执行回调
+    connectionCallback_(shared_from_this());
+}
+// 连接销毁
+void TcpConnection::connectDestroyed()
+{
+    if (state_ == kConnected)
+    {
+        setState(kDisconnected);
+        channel_->disableAll(); // 把channel的所有感兴趣的事件从poller中删除掉
+        connectionCallback_(shared_from_this());
+    }
+    channel_->remove(); // 把channel从poller中删除掉
+}
+
+
 void TcpConnection::handleRead(Timestamp receiveTime)
 {
     int savedErrno = 0;
@@ -239,7 +262,7 @@ void TcpConnection::sendFile(int fileDescriptor, off_t offset, size_t count)
         }
         else
         {
-            loop_->runInLoop(std::bind(TcpConnection::sendFileInLoop,this,fileDescriptor,offset,count));
+            loop_->runInLoop(std::bind(&TcpConnection::sendFileInLoop,this,fileDescriptor,offset,count));
         }
     }
     else

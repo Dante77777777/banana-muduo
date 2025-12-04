@@ -30,7 +30,7 @@ EventLoop *EventLoopThread::startLoop()
     EventLoop *loop = nullptr;
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        cond_.wait(lock,[this](){ loop_ != nullptr; });
+        cond_.wait(lock,[this](){ return loop_ != nullptr; });
         loop = loop_;
     }
     return loop;

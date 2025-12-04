@@ -90,7 +90,7 @@ void EventLoop::quit()
 
 void EventLoop::runInLoop(Functor cb)
 {
-    if(isInLoopThread)
+    if(isInLoopThread())
     {
         cb();
     }
